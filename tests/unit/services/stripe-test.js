@@ -17,6 +17,13 @@ var cc = {
   address_zip: 12345
 };
 
+var bankAccount = {
+  country: 'US',
+  currency: 'USD',
+  routing_number: '110000000',
+  account_number: '000123456789'
+};
+
 /**
  * @todo  deprecate
  */
@@ -106,6 +113,49 @@ test('stripe.card.createToken rejects the promise if Stripe errors', function(as
   });
 });
 
+/**
+ * stripe.bankAccount
+ */
+
+test('stripe.bankAccount.createToken sets the account token and returns a promise', function(assert) {
+  var stripe = this.subject();
+  var response = {
+    id: 'the_bank_token'
+  };
+
+  var createToken = sinon.stub(Stripe.bankAccount, 'createToken', function(account, cb) {
+    assert.equal(account, bankAccount, 'called with sample bank account');
+    cb(200, response);
+  });
+
+  return stripe.bankAccount.createToken(bankAccount)
+    .then(function(res) {
+      assert.equal(res.id, 'the_bank_token');
+      createToken.restore();
+    });
+});
+
+test('stripe.bankAccount.createToken rejects the promise if Stripe errors', function(assert) {
+  var stripe = this.subject();
+  var response = {
+    error: {
+      type: 'invalid_request_error',
+      message: 'Invalid routing number',
+      param: 'bank_account'
+    }
+  };
+
+  var createToken = sinon.stub(Stripe.bankAccount, 'createToken', function(account, cb) {
+    cb(402, response);
+  });
+
+  return stripe.bankAccount.createToken(bankAccount)
+  .then(undefined, function(res) {
+    assert.equal(res, response, 'error passed');
+    createToken.restore();
+  });
+});
+
 // LOG_STRIPE_SERVICE is set to true in dummy app
 test('it logs when LOG_STRIPE_SERVICE is set in env config', function(assert) {
   var service = this.subject();
@@ -118,9 +168,9 @@ test('it logs when LOG_STRIPE_SERVICE is set in env config', function(assert) {
     cb(200, response);
   });
 
-  return service.createToken(cc)
+  return service.card.createToken(cc)
   .then(function(err) {
-    assert.ok(info.calledWith('StripeService: getStripeToken - card:', cc));
+    assert.ok(info.calledWith('StripeService - card.createToken:', cc));
     createToken.restore();
     info.restore();
   });
