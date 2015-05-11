@@ -17,7 +17,10 @@ var cc = {
   address_zip: 12345
 };
 
-test('createToken sets the token and returns a promise', function(assert) {
+/**
+ * @todo  deprecate
+ */
+test('stripe.createToken sets the card token and returns a promise', function(assert) {
   var service = this.subject();
   var response = {
     id: 'the_token'
@@ -35,7 +38,10 @@ test('createToken sets the token and returns a promise', function(assert) {
     });
 });
 
-test('createToken rejects the promise if Stripe errors', function(assert) {
+/**
+ * @todo deprecate
+ */
+test('stripe.createToken rejects the promise if Stripe errors', function(assert) {
   var service = this.subject();
   var response = {
     error : {
@@ -51,6 +57,49 @@ test('createToken rejects the promise if Stripe errors', function(assert) {
   });
 
   return service.createToken(cc)
+  .then(undefined, function(res) {
+    assert.equal(res, response, 'error passed');
+    createToken.restore();
+  });
+});
+
+/**
+ * stripe.card
+ */
+test('stripe.card.createToken sets the card token and returns a promise', function(assert) {
+  var stripe = this.subject();
+  var response = {
+    id: 'the_card_token'
+  };
+
+  var createToken = sinon.stub(Stripe.card, 'createToken', function(card, cb) {
+    assert.equal(card, cc, 'called with sample creditcard');
+    cb(200, response);
+  });
+
+  return stripe.card.createToken(cc)
+    .then(function(res) {
+      assert.equal(res.id, 'the_card_token');
+      createToken.restore();
+    });
+});
+
+test('stripe.card.createToken rejects the promise if Stripe errors', function(assert) {
+  var stripe = this.subject();
+  var response = {
+    error : {
+      code: "invalid_number",
+      message: "The 'exp_month' parameter should be an integer (instead, is Month).",
+      param: "exp_month",
+      type: "card_error"
+    }
+  };
+
+  var createToken = sinon.stub(Stripe.card, 'createToken', function(card, cb) {
+    cb(402, response);
+  });
+
+  return stripe.card.createToken(cc)
   .then(undefined, function(res) {
     assert.equal(res, response, 'error passed');
     createToken.restore();
