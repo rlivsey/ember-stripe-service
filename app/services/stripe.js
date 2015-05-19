@@ -1,7 +1,7 @@
-/* global Stripe */
 import config from '../config/environment';
 import Ember from 'ember';
 var debug = config.LOG_STRIPE_SERVICE;
+var Stripe = window.Stripe;
 
 function createToken (card) {
   if (debug) {

@@ -1,7 +1,7 @@
-/* global Stripe */
 import Ember from 'ember';
 import config from '../config/environment';
 var debug = config.LOG_STRIPE_SERVICE;
+var Stripe = window.Stripe;
 
 export function initialize() {
   if (debug) {
